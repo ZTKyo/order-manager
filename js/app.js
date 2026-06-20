@@ -610,10 +610,11 @@ function renderDashboard() {
     const countBy = (status) => orders.filter(o => o.status === status).length;
     const unpaidOrders = orders.filter(isUnpaid);
     const totalUnpaid = unpaidOrders.reduce((sum, o) => sum + getUnpaidAmount(o), 0);
+    const totalRevenue = orders.reduce((s, o) => s + (Number(o.paidAmount) || 0), 0);
+    const totalPrice = orders.reduce((s, o) => s + (Number(o.price) || 0), 0);
 
     const recent = [...orders]
-        .sort((a, b) => tsToNumber(b.updatedAt) - tsToNumber(a.updatedAt))
-        .slice(0, 5);
+        .sort((a, b) => tsToNumber(b.updatedAt) - tsToNumber(a.updatedAt));
 
     const overdueList = orders
         .filter(o => getOverdueLevel(o) >= 1)
@@ -623,6 +624,10 @@ function renderDashboard() {
         <div class="page-title">📊 仪表盘</div>
 
         <div class="stats-grid">
+            <div class="stat-card" onclick="state.currentFilter='all';navigate('orders');">
+                <div class="stat-label">总订单数</div>
+                <div class="stat-value">${orders.length}</div>
+            </div>
             <div class="stat-card" onclick="state.currentFilter='pending';navigate('orders');">
                 <div class="stat-label">待制作</div>
                 <div class="stat-value">${countBy('pending')}</div>
@@ -634,6 +639,10 @@ function renderDashboard() {
             <div class="stat-card" onclick="state.currentFilter='delivered';navigate('orders');">
                 <div class="stat-label">已交付</div>
                 <div class="stat-value">${countBy('delivered')}</div>
+            </div>
+            <div class="stat-card" onclick="state.currentFilter='done';navigate('orders');">
+                <div class="stat-label">已完成</div>
+                <div class="stat-value">${countBy('done')}</div>
             </div>
             <div class="stat-card highlight" onclick="state.currentFilter='unpaid';navigate('orders');">
                 <div class="stat-label">待收款订单</div>
