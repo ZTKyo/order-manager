@@ -1047,6 +1047,7 @@ function renderDetail(id) {
                 <div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;">${statusBtns}</div>
 
                 <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:13px;display:flex;justify-content:space-between;"><span style="color:#6b7280;">客户</span><span>${escapeHtml(order.customer)}</span></div>
+                <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:13px;display:flex;justify-content:space-between;"><span style="color:#6b7280;">店铺</span><span>${escapeHtml(order.shop || '（未指定）')}</span></div>
                 <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:13px;display:flex;justify-content:space-between;"><span style="color:#6b7280;">报价</span><span>${formatMoney(order.price)}</span></div>
                 <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:13px;display:flex;justify-content:space-between;"><span style="color:#6b7280;">已收</span><span>${formatMoney(order.paidAmount)}</span></div>
                 ${order.count ? `<div style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:13px;display:flex;justify-content:space-between;"><span style="color:#6b7280;">数量</span><span>${escapeHtml(order.count)}</span></div>`:''}
@@ -1132,9 +1133,19 @@ function closeModal(event) {
 function showEditModal(id) {
     const o = state.orders.find(x => x.id === id) || state.orders.find(x => x._docId === id);
     if (!o) return;
+    const shopOptions = state.shops.map(s =>
+        `<option value="${escapeHtml(s)}" ${o.shop === s ? 'selected' : ''}>${escapeHtml(s)}</option>`
+    ).join('');
     document.getElementById('modal-body').innerHTML = `
         <div style="font-size:16px;font-weight:600;margin-bottom:14px;">编辑订单</div>
         <div class="form-group"><label class="form-label">客户昵称</label><input class="form-input" id="edit-customer" value="${escapeHtml(o.customer)}"></div>
+        <div class="form-group">
+            <label class="form-label">来源店铺</label>
+            <select class="form-input" id="edit-shop" style="width:100%;">
+                <option value="">（未指定）</option>
+                ${shopOptions}
+            </select>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div class="form-group"><label class="form-label">报价金额</label><input class="form-input" id="edit-price" type="number" min="0" step="0.01" value="${o.price || 0}"></div>
             <div class="form-group"><label class="form-label">已收金额</label><input class="form-input" id="edit-paid" type="number" min="0" step="0.01" value="${o.paidAmount || 0}"></div>
@@ -1154,6 +1165,7 @@ function saveEdit(id) {
     const o = state.orders.find(x => x.id === id) || state.orders.find(x => x._docId === id);
     if (!o) return;
     o.customer = document.getElementById('edit-customer').value.trim() || o.customer;
+    o.shop = document.getElementById('edit-shop').value.trim();
     o.price = parseFloat(document.getElementById('edit-price').value) || 0;
     o.paidAmount = parseFloat(document.getElementById('edit-paid').value) || 0;
     o.count = document.getElementById('edit-count').value.trim();
