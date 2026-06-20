@@ -409,6 +409,7 @@ function cloudWrite(order) {
         note: order.note || '',
         images: order.images || [],
         count: order.count || '',
+        shop: order.shop || '',
         modifyCount: Number(order.modifyCount) || 0,
         viewLink: order.viewLink || '',
         sourceLink: order.sourceLink || '',
@@ -764,7 +765,8 @@ function filterOrders() {
         const low = q.toLowerCase();
         list = list.filter(o =>
             (o.customer || '').toLowerCase().includes(low) ||
-            (o.note || '').toLowerCase().includes(low)
+            (o.note || '').toLowerCase().includes(low) ||
+            (o.shop || '').toLowerCase().includes(low)
         );
     }
     // 排序：已完成筛选按 doneAt 倒序；其他按超期+更新时间
