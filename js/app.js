@@ -47,6 +47,7 @@ try {
 // ========== 全局状态 ==========
 let state = {
     orders: [],
+    shops: ['露露', 'wang', '萝萝'],  // 店铺列表
     currentPage: 'dashboard',
     currentFilter: 'all',
     currentSearch: '',
@@ -371,7 +372,7 @@ function setupCloudRealtime() {
 
 function saveToLocalStorage() {
     try {
-        localStorage.setItem('order_management_data_v1', JSON.stringify({ orders: state.orders }));
+        localStorage.setItem('order_management_data_v1', JSON.stringify({ orders: state.orders, shops: state.shops }));
     } catch (e) {
         console.error('保存本地失败', e);
     }
@@ -383,6 +384,9 @@ function loadFromLocalStorage() {
         if (raw) {
             const data = JSON.parse(raw);
             state.orders = data.orders || [];
+            if (data.shops && Array.isArray(data.shops)) {
+                state.shops = data.shops;
+            }
         }
     } catch (e) {
         console.error('加载失败', e);
@@ -469,6 +473,7 @@ function createOrder(data) {
         note: data.note || '',
         images: data.images || [],
         count: data.count || '',
+        shop: data.shop || '',  // 店铺名称
         modifyCount: 0,
         viewLink: '',
         sourceLink: '',
@@ -708,6 +713,7 @@ function renderOrderCard(order) {
                     <div class="order-customer">${escapeHtml(order.customer)}</div>
                     <div class="order-price">${formatMoney(order.price)}</div>
                 </div>
+                ${order.shop ? `<div class="shop-badge">🏪 ${escapeHtml(order.shop)}</div>` : ''}
                 <div class="order-meta">
                     ${statusBadge}
                     ${order.count ? ` · ${escapeHtml(order.count)}` : ''}
@@ -809,6 +815,16 @@ function renderNewOrder() {
                 </div>
             </div>
             <div class="form-group">
+                <label class="form-label">来源店铺</label>
+                <div class="shop-selector" id="shop-selector">
+                    ${state.shops.map((s, i) => `
+                        <button class="shop-tag ${i === 0 ? 'active' : ''}" onclick="selectShop(this, '${escapeHtml(s)}')">${escapeHtml(s)}</button>
+                    `).join('')}
+                    <button class="shop-tag shop-add" onclick="showAddShopModal()">+</button>
+                </div>
+                <input type="hidden" id="new-shop" value="${state.shops[0] || ''}">
+            </div>
+            <div class="form-group">
                 <label class="form-label">平面图（点击或拖拽上传，支持多张）</label>
                 <div class="upload-area" onclick="document.getElementById('new-image-input').click()">
                     <div class="upload-icon">📐</div>
@@ -896,10 +912,11 @@ function handleNewOrderSubmit() {
     const price = parseFloat(document.getElementById('new-price').value);
     const count = document.getElementById('new-count').value.trim();
     const note = document.getElementById('new-note').value.trim();
+    const shop = document.getElementById('new-shop').value.trim();
     if (!customer) { showToast('请填写客户昵称'); return; }
     if (isNaN(price) || price < 0) { showToast('请填写正确金额'); return; }
 
-    const order = createOrder({ customer, price, count, note, images: [...window._pendingImages] });
+    const order = createOrder({ customer, price, count, note, shop, images: [...window._pendingImages] });
     window._pendingImages = [];
     showToast('✓ 订单已创建');
     // 跳转到详情页（需要有 key；云端模式下 key 由 onSnapshot 生成）
@@ -908,6 +925,54 @@ function handleNewOrderSubmit() {
     } else {
         // 云端模式：onSnapshot 稍后会刷新列表，这里跳到订单列表即可
         navigate('orders');
+    }
+}
+
+// ========== 店铺管理 ==========
+function selectShop(btn, shopName) {
+    document.querySelectorAll('.shop-tag').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('new-shop').value = shopName;
+}
+
+function showAddShopModal() {
+    const html = `
+        <div style="padding:16px;">
+            <div style="font-weight:600;margin-bottom:12px;">添加新店铺</div>
+            <input type="text" id="add-shop-name" class="form-input" placeholder="店铺名称" autofocus>
+            <div style="display:flex;gap:8px;margin-top:16px;">
+                <button class="btn btn-secondary" style="flex:1;" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" style="flex:1;" onclick="addShop()">添加</button>
+            </div>
+        </div>
+    `;
+    showModal(html);
+}
+
+function addShop() {
+    const name = document.getElementById('add-shop-name').value.trim();
+    if (!name) { showToast('请输入店铺名称'); return; }
+    if (state.shops.includes(name)) { showToast('店铺已存在'); return; }
+    state.shops.push(name);
+    save();
+    closeModal();
+    showToast(`✓ 已添加店铺：${name}`);
+    // 如果当前在新增订单页面，重新渲染表单以显示新店铺
+    if (state.currentPage === 'new') {
+        renderCurrentPage();
+    } else if (state.currentPage === 'settings') {
+        renderCurrentPage();
+    }
+}
+
+function removeShop(index) {
+    const shop = state.shops[index];
+    if (!confirm(`确定要删除店铺「${shop}」吗？关联的订单仍会保留该店铺名称。`)) return;
+    state.shops.splice(index, 1);
+    save();
+    showToast(`✓ 已删除店铺：${shop}`);
+    if (state.currentPage === 'settings') {
+        renderCurrentPage();
     }
 }
 
@@ -1468,6 +1533,10 @@ window.handleModalImageUpload = handleModalImageUpload;
 window.removeModalImage = removeModalImage;
 window.saveAddImages = saveAddImages;
 window.deleteOrder = deleteOrder;
+window.selectShop = selectShop;
+window.showAddShopModal = showAddShopModal;
+window.addShop = addShop;
+window.removeShop = removeShop;
 
 // ========== Telegram 通知设置页 ==========
 function renderSettings() {
@@ -1523,6 +1592,20 @@ function renderSettings() {
                 ✅ <b>交付后 7 天未收款</b>：严重提醒<br>
                 <span style="color:#9ca3af;">📌 每条订单 + 每类规则只会提醒一次，避免骚扰</span>
             </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">店铺管理</div>
+            <div style="font-size:13px;color:#6b7280;margin-bottom:12px;">管理订单来源店铺，新增订单时可选择来源</div>
+            <div id="shops-list" style="display:flex;flex-wrap:gap:8px;flex-wrap:wrap;">
+                ${state.shops.map((s, i) => `
+                    <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--bg-secondary);border-radius:8px;margin-right:8px;margin-bottom:8px;">
+                        <span>${escapeHtml(s)}</span>
+                        <button class="mini-btn" onclick="removeShop(${i})" title="删除店铺">✕</button>
+                    </div>
+                `).join('')}
+            </div>
+            <button class="btn btn-secondary" style="margin-top:12px;padding:8px 16px;font-size:13px;" onclick="showAddShopModal()">+ 添加新店铺</button>
         </div>
 
         <div class="section">
