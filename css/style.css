@@ -41,7 +41,9 @@ body {
 .header {
     position: sticky;
     top: 0;
-    background: var(--card);
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 14px 16px;
     margin: 0 -16px 16px;
     border-bottom: 1px solid var(--border);
@@ -185,8 +187,8 @@ body {
 /* ---- Order Card ---- */
 .orders-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
 }
 
 .order-card {
@@ -198,33 +200,39 @@ body {
     transition: transform 0.15s, box-shadow 0.15s;
     display: flex;
     flex-direction: column;
+    border: 1px solid var(--border);
 }
 
 .order-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
+    border-color: #cbd5e1;
 }
 
 .order-thumb {
     width: 100%;
-    height: 180px;
-    background: #eee;
+    min-height: 220px;
+    background: #f1f5f9;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
-    position: relative;
+    padding: 8px;
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .order-thumb img {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: auto;
+    max-height: 260px;
+    object-fit: contain;
+    border-radius: 6px;
+    display: block;
 }
 
 .order-thumb .thumb-placeholder {
-    color: #bbb;
-    font-size: 40px;
+    color: #94a3b8;
+    font-size: 44px;
+    padding: 40px 0;
 }
 
 .order-body {
@@ -316,13 +324,15 @@ body {
 }
 
 .filter-btn {
-    padding: 6px 12px;
+    padding: 7px 14px;
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 20px;
     font-size: 13px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s;
+    color: var(--text);
+    font-weight: 500;
 }
 
 .filter-btn:hover {
@@ -337,17 +347,19 @@ body {
 
 .search-box {
     width: 100%;
-    padding: 10px 14px;
+    padding: 11px 14px;
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: 8px;
     font-size: 14px;
     margin-bottom: 12px;
     background: var(--card);
+    transition: border-color 0.15s;
 }
 
 .search-box:focus {
     outline: none;
     border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.12);
 }
 
 /* ---- Form ---- */
@@ -548,6 +560,50 @@ body {
     flex-wrap: wrap;
 }
 
+/* 返回按钮：明显的按钮样式 */
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s;
+    user-select: none;
+}
+
+.back-btn:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    transform: translateX(-2px);
+}
+
+.back-btn .arrow {
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.detail-title-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.detail-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+}
+
 .detail-image {
     flex: 1;
     min-width: 280px;
@@ -555,32 +611,34 @@ body {
     cursor: zoom-in;
     border-radius: var(--radius);
     overflow: hidden;
-    background: #eee;
-    max-height: 500px;
+    background: #f1f5f9;
 }
 
-.detail-image img {
+.detail-image > img {
     width: 100%;
-    height: 100%;
+    height: auto;
+    max-height: 560px;
     object-fit: contain;
-    max-height: 500px;
     display: block;
     background: #fafafa;
+    border-radius: 8px;
 }
 
 .detail-image .image-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 8px;
-    padding: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    padding: 10px;
 }
 
 .detail-image .image-grid img {
     width: 100%;
-    height: 150px;
-    object-fit: cover;
-    border-radius: 6px;
+    height: auto;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: 8px;
     cursor: zoom-in;
+    background: #fafafa;
 }
 
 .detail-info {
@@ -633,14 +691,15 @@ body {
 }
 
 .quick-btn {
-    padding: 6px 12px;
-    background: var(--bg);
+    padding: 7px 14px;
+    background: var(--card);
     border: 1px solid var(--border);
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 13px;
     cursor: pointer;
     transition: all 0.15s;
     color: var(--text);
+    font-weight: 500;
 }
 
 .quick-btn:hover {

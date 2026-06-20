@@ -915,10 +915,10 @@ function renderDetail(id) {
     let imagesHtml = '';
     if (order.images && order.images.length > 0) {
         if (order.images.length === 1) {
-            imagesHtml = `<img src="${order.images[0]}" style="max-width:100%;max-height:500px;display:block;border-radius:8px;background:#fafafa;cursor:zoom-in;" onclick="showImage('${escapeHtml(order.images[0])}')">`;
+            imagesHtml = `<img src="${order.images[0]}" onclick="showImage('${escapeHtml(order.images[0])}')">`;
         } else {
-            imagesHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;">${order.images.map(src =>
-                `<img src="${src}" style="width:100%;height:150px;object-fit:cover;border-radius:6px;cursor:zoom-in;" onclick="showImage('${escapeHtml(src)}')">`
+            imagesHtml = `<div class="image-grid">${order.images.map(src =>
+                `<img src="${src}" onclick="showImage('${escapeHtml(src)}')">`
             ).join('')}</div>`;
         }
     } else {
@@ -932,12 +932,17 @@ function renderDetail(id) {
     const ph = (order.paymentHistory || []).slice().reverse();
 
     return `
-        <div class="page-title">
-            <a class="link" onclick="navigate('orders')">← 返回</a> · ${escapeHtml(order.customer)}
+        <div class="detail-title-bar">
+            <button class="back-btn" onclick="navigate('orders')">
+                <span class="arrow">←</span>
+                <span>返回</span>
+            </button>
+            <div class="detail-title">${escapeHtml(order.customer)}</div>
+            <span class="status-badge ${STATUS_MAP[order.status]?.class || ''}">${STATUS_MAP[order.status]?.label || order.status}</span>
         </div>
 
         <div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
-            <div style="flex:1;min-width:280px;">${imagesHtml}</div>
+            <div class="detail-image">${imagesHtml}</div>
 
             <div style="flex:1;min-width:280px;">
                 <div class="payment-section">
