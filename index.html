@@ -4,8 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>订单管理</title>
-    <!-- 加版本号 v1 以强制浏览器加载新 CSS（之后每次大改都可手动 bump） -->
-    <link rel="stylesheet" href="css/style.css?v=20260620">
+
+    <!-- PWA Web App Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- iOS Web App 配置 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="订单管理">
+
+    <!-- 主题色 -->
+    <meta name="theme-color" content="#007AFF">
+
+    <!-- 图标（iOS 小图标） -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23007AFF' width='180' height='180' rx='40'/><text x='90' y='125' font-size='90' text-anchor='middle' fill='white'>📋</text></svg>">
     <style>
         /* 启动加载动画 —— 内嵌避免 CSS 还没加载完时闪一下 */
         #boot-loader {
@@ -109,5 +121,20 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
     <script src="js/app.js?v=20260620"></script>
+
+    <!-- PWA Service Worker 注册 -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(function(registration) {
+              console.log('SW registered:', registration.scope);
+            })
+            .catch(function(err) {
+              console.log('SW registration failed:', err);
+            });
+        });
+      }
+    </script>
 </body>
 </html>
