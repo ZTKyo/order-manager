@@ -16,6 +16,9 @@
     <!-- 主题色 -->
     <meta name="theme-color" content="#007AFF">
 
+    <!-- 样式表（加版本号防止缓存） -->
+    <link rel="stylesheet" href="css/style.css?v=20260620-2">
+
     <!-- 图标（iOS 小图标） -->
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23007AFF' width='180' height='180' rx='40'/><text x='90' y='125' font-size='90' text-anchor='middle' fill='white'>📋</text></svg>">
     <style>
@@ -126,7 +129,7 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-          navigator.serviceWorker.register('/service-worker.js')
+          navigator.serviceWorker.register('./service-worker.js')
             .then(function(registration) {
               console.log('SW registered:', registration.scope);
             })

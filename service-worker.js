@@ -1,12 +1,12 @@
 const CACHE_NAME = 'order-manager-v1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/css/style.css',
-  '/js/app.js'
+  './',
+  './index.html',
+  './css/style.css',
+  './js/app.js',
+  './manifest.json'
 ];
 
-// Install event - cache resources
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -15,7 +15,6 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Activate event - clean old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -28,31 +27,28 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', event => {
+  const request = event.request;
+  if (request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request).then(response => {
-          // Don't cache non-GET requests or non-successful responses
-          if (event.request.method !== 'GET' || !response || response.status !== 200) {
+    caches.match(request)
+      .then(cached => {
+        const fetchPromise = fetch(request)
+          .then(response => {
+            if (response && response.status === 200 && response.type === 'basic') {
+              const responseToCache = response.clone();
+              caches.open(CACHE_NAME).then(cache => cache.put(request, responseToCache));
+            }
             return response;
-          }
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseToCache);
-          });
-          return response;
-        });
-      })
-      .catch(() => {
-        // Return offline page if available
-        if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
+          })
+          .catch(() => cached);
+
+        // Network-first for navigation, cache-first for assets
+        if (request.mode === 'navigate') {
+          return fetchPromise.catch(() => caches.match('./index.html'));
         }
+        return cached || fetchPromise;
       })
   );
 });
