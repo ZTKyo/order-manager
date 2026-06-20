@@ -232,12 +232,22 @@ function switchToAppScreen() {
     if (auth) auth.style.display = 'none';
     if (app) app.style.display = 'block';
     const info = document.getElementById('user-info');
-    if (info && storageMode === 'cloud' && currentUserId) {
-        info.textContent = `👤 ${currentUserId.slice(0, 6)}…`;
-    } else if (info) {
-        info.textContent = '';
+    if (info) {
+        if (storageMode === 'cloud' && currentUserId) {
+            // 云端模式：显示用户信息
+            info.textContent = `👤 ${currentUserId.slice(0, 6)}…`;
+        } else {
+            // 本机模式：显示登录按钮，点击即清空本机标记并进入登录页
+            info.innerHTML = '<button class="nav-btn nav-btn-ghost" onclick="tryCloudLogin()" style="background:rgba(0,122,255,0.1);color:#007AFF;padding:6px 12px;border-radius:9px;border:none;font-weight:600;cursor:pointer;font-size:13px;">🔐 登录 / 云端同步</button>';
+        }
     }
     hideBootLoader();
+}
+
+function tryCloudLogin() {
+    // 从本机模式重新尝试登录：清除"已选择本机模式"标记，进入登录页
+    try { localStorage.removeItem('order-mgr-explicit-local'); } catch(e){}
+    switchToAuthScreen();
 }
 
 // ========== Auth 状态监听 ==========
@@ -1438,6 +1448,7 @@ window.signIn = signIn;
 window.signUp = signUp;
 window.signOut = signOut;
 window.signInAnon = signInAnon;
+window.tryCloudLogin = tryCloudLogin;
 window.navigate = navigate;
 window.exportData = exportData;
 window.importData = importData;
