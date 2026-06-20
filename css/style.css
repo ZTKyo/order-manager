@@ -438,6 +438,71 @@ html, body {
     color: var(--success);
 }
 
+/* ===== Shop Stats Row ===== */
+.shop-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 12px;
+    transition: background 0.2s;
+}
+
+.shop-stat-row:hover {
+    background: var(--bg-secondary);
+}
+
+.shop-stat-rank {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #5AC8FA 0%, #007AFF 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 122, 255, 0.25);
+}
+
+.shop-stat-row:nth-of-type(1) .shop-stat-rank {
+    background: linear-gradient(135deg, #FFD700 0%, #FF9500 100%);
+    box-shadow: 0 2px 6px rgba(255, 149, 0, 0.3);
+}
+
+.shop-stat-row:nth-of-type(2) .shop-stat-rank {
+    background: linear-gradient(135deg, #E5E5EA 0%, #8E8E93 100%);
+    box-shadow: 0 2px 6px rgba(142, 142, 147, 0.25);
+}
+
+.shop-stat-row:nth-of-type(3) .shop-stat-rank {
+    background: linear-gradient(135deg, #D4A373 0%, #A0522D 100%);
+    box-shadow: 0 2px 6px rgba(160, 82, 45, 0.25);
+}
+
+.shop-stat-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.shop-stat-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.shop-stat-detail {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.shop-stat-amount {
+    text-align: right;
+    flex-shrink: 0;
+}
+
 /* ===== Filter bar ===== */
 .filter-bar {
     display: flex;

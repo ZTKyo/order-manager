@@ -288,15 +288,15 @@ if (!authHandledOnce && fbAuth) {
         const unsub = fbAuth.onAuthStateChanged(
             user => {
                 if (authHandledOnce) {
-                    // 后续登录态变化（退出/切换账号）
                     if (!user) {
                         switchToAuthScreen();
                     } else {
-                            currentUserId = user.uid;
-                            storageMode = 'cloud';
-                            switchToAppScreen();
-                            setupCloudRealtime();
-                        }
+                        currentUserId = user.uid;
+                        storageMode = 'cloud';
+                        switchToAppScreen();
+                        navigate('dashboard');
+                        setupCloudRealtime();
+                    }
                     return;
                 }
                 authHandledOnce = true;
@@ -304,14 +304,12 @@ if (!authHandledOnce && fbAuth) {
                 clearTimeout(fallbackTimer);
 
                 if (user) {
-                    // 已登录：直接进入应用（不显示登录页"闪一下"）
                     currentUserId = user.uid;
                     storageMode = 'cloud';
                     switchToAppScreen();
                     setupCloudRealtime();
                     navigate('dashboard');
                 } else {
-                    // 未登录：显示登录页
                     switchToAuthScreen();
                 }
             },
@@ -1273,6 +1271,49 @@ function renderStats() {
     const totalPrice = orders.reduce((s, o) => s + (Number(o.price) || 0), 0);
     const totalUnpaid = orders.filter(isUnpaid).reduce((s, o) => s + getUnpaidAmount(o), 0);
 
+    // ========== 按店铺统计 ==========
+    const shopStatsMap = {};
+    const shopCount = {};
+    for (const o of orders) {
+        const shopName = o.shop || '未指定';
+        if (!shopStatsMap[shopName]) {
+            shopStatsMap[shopName] = { count: 0, done: 0, paid: 0, price: 0, unpaid: 0 };
+            shopCount[shopName] = 0;
+        }
+        shopStatsMap[shopName].count++;
+        shopStatsMap[shopName].price += Number(o.price) || 0;
+        shopStatsMap[shopName].paid += Number(o.paidAmount) || 0;
+        if (o.status === 'done') shopStatsMap[shopName].done++;
+        const u = getUnpaidAmount(o);
+        if (u > 0) shopStatsMap[shopName].unpaid += u;
+    }
+    const shopStatsList = Object.entries(shopStatsMap)
+        .map(([name, s]) => ({ name, ...s }))
+        .sort((a, b) => b.count - a.count || b.paid - a.paid);
+
+    const maxShopCount = Math.max(1, ...shopStatsList.map(s => s.count));
+    const maxShopPaid = Math.max(1, ...shopStatsList.map(s => s.paid));
+
+    const shopBarsHtml = shopStatsList.map(s => {
+        const countH = s.count === 0 ? 4 : Math.max(8, Math.round(s.count / maxShopCount * chartMaxHeight));
+        const paidH = s.paid === 0 ? 4 : Math.max(8, Math.round(s.paid / maxShopPaid * chartMaxHeight));
+        const countLabel = s.count > 0 ? String(s.count) : '';
+        const paidLabel = s.paid > 0 ? formatMoney(s.paid).replace('¥', '') : '';
+        return `
+            <div class="bar-col">
+                <div class="bar-bars">
+                    <div class="bar-item bar-blue" style="height:${countH}px;">
+                        <span class="bar-tooltip">${countLabel}</span>
+                    </div>
+                    <div class="bar-item bar-green" style="height:${paidH}px;">
+                        <span class="bar-tooltip">${paidLabel}</span>
+                    </div>
+                </div>
+                <div class="bar-label">${escapeHtml(s.name)}</div>
+            </div>
+        `;
+    }).join('');
+
     // 构建 6 个月份 × 双柱子 的 HTML
     const barsHtml = monthStats.map(ms => {
         // 接单柱（蓝色）：0 -> 4px，其他按比例
@@ -1338,6 +1379,42 @@ function renderStats() {
                 <div class="stat-card stat-card-small"><div class="stat-label">总待收</div><div class="stat-value" style="font-size:22px;color:var(--warning);">${formatMoney(totalUnpaid)}</div></div>
             </div>
         </div>
+
+        ${shopStatsList.length > 0 ? `
+        <div class="section">
+            <div class="section-title-row">
+                <div class="section-title">按店铺</div>
+                <div class="bar-legend">
+                    <div class="bar-legend-item"><span class="bar-legend-dot"></span>订单数</div>
+                    <div class="bar-legend-item"><span class="bar-legend-dot dot-green"></span>收款额</div>
+                </div>
+            </div>
+
+            <div class="bar-chart">
+                <div class="bar-chart-grid">
+                    ${shopBarsHtml}
+                </div>
+            </div>
+
+            <div style="margin-top:16px;">
+                ${shopStatsList.map((s, i) => `
+                    <div class="shop-stat-row" style="${i > 0 ? 'border-top:1px solid var(--separator);' : ''}">
+                        <div class="shop-stat-rank">${i + 1}</div>
+                        <div class="shop-stat-info">
+                            <div class="shop-stat-name">${escapeHtml(s.name)}</div>
+                            <div class="shop-stat-detail">
+                                订单 <b>${s.count}</b> · 完成 <b style="color:var(--success);">${s.done}</b> · 待收 <b style="color:var(--warning);">${formatMoney(s.unpaid)}</b>
+                            </div>
+                        </div>
+                        <div class="shop-stat-amount">
+                            <div style="font-size:11px;color:var(--text-tertiary);">收入</div>
+                            <div style="font-size:18px;font-weight:700;color:var(--success);">${formatMoney(s.paid)}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+        ` : ''}
     `;
 }
 
