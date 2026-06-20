@@ -699,13 +699,15 @@ function renderOrderCard(order) {
             ? `<span style="font-size:11px;color:#6b7280;">完成：${formatDate(order.doneAt)}</span>`
             : '';
         const vBtn = order.viewLink
-            ? `<a class="link" style="font-size:11px;padding:0 6px;" target="_blank" href="${escapeHtml(order.viewLink)}" onclick="event.stopPropagation()">查看 ↗</a>`
+            ? `<a class="link" style="font-size:11px;padding:0 6px;" target="_blank" href="${escapeHtml(order.viewLink)}" onclick="event.stopPropagation()">查看 ↗</a>
+               <a class="link" style="font-size:11px;padding:0 4px;" onclick="event.stopPropagation();copyText('${escapeHtml(order.viewLink)}')">📋</a>`
             : '';
         const sBtn = order.sourceLink
-            ? `<a class="link" style="font-size:11px;padding:0 6px;" target="_blank" href="${escapeHtml(order.sourceLink)}" onclick="event.stopPropagation()">源文件 ↗</a>`
+            ? `<a class="link" style="font-size:11px;padding:0 6px;" target="_blank" href="${escapeHtml(order.sourceLink)}" onclick="event.stopPropagation()">源文件 ↗</a>
+               <a class="link" style="font-size:11px;padding:0 4px;" onclick="event.stopPropagation();copyText('${escapeHtml(order.sourceLink)}')">📋</a>`
             : '';
         if (vBtn || sBtn) {
-            linksBar = `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e5e7eb;display:flex;justify-content:space-between;align-items:center;gap:4px;flex-wrap:wrap;">${dateLabel}<span style="display:flex;gap:8px;">${vBtn}${sBtn}</span></div>`;
+            linksBar = `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e5e7eb;display:flex;justify-content:space-between;align-items:center;gap:4px;flex-wrap:wrap;">${dateLabel}<span style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">${vBtn}${sBtn}</span></div>`;
         } else if (dateLabel) {
             linksBar = `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e5e7eb;font-size:11px;color:#6b7280;text-align:right;">${dateLabel}</div>`;
         }
@@ -1073,10 +1075,12 @@ function renderDetail(id) {
                     <div style="font-size:12px;color:#4b5563;margin-bottom:4px;">查看链接：</div>
                     <div style="display:flex;gap:6px;margin-bottom:8px;">
                         <input type="url" class="form-input" style="flex:1;margin:0;padding:8px 10px;font-size:13px;" id="link-view" value="${escapeHtml(order.viewLink || '')}">
+                        <button class="btn btn-secondary" style="padding:0 10px;font-size:12px;white-space:nowrap;" onclick="copyText(document.getElementById('link-view').value)">📋 复制</button>
                     </div>
                     <div style="font-size:12px;color:#4b5563;margin-bottom:4px;">源文件链接：</div>
                     <div style="display:flex;gap:6px;margin-bottom:10px;">
                         <input type="url" class="form-input" style="flex:1;margin:0;padding:8px 10px;font-size:13px;" id="link-source" value="${escapeHtml(order.sourceLink || '')}">
+                        <button class="btn btn-secondary" style="padding:0 10px;font-size:12px;white-space:nowrap;" onclick="copyText(document.getElementById('link-source').value)">📋 复制</button>
                     </div>
                     <button class="btn btn-primary" style="width:100%;padding:8px;font-size:13px;" onclick="saveLinks('${key}')">保存链接</button>
                 </div>
@@ -1122,6 +1126,39 @@ function saveLinks(id) {
     persistOrder(o);
     showToast('✓ 链接已保存');
     if (storageMode === 'local') renderCurrentPage();
+}
+
+function copyText(text) {
+    if (!text) { showToast('暂无内容可复制'); return; }
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(
+                () => showToast('✓ 已复制'),
+                () => fallbackCopy(text)
+            );
+            return;
+        }
+    } catch (e) {}
+    fallbackCopy(text);
+}
+
+function fallbackCopy(text) {
+    try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.top = '-1000px';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        ta.setSelectionRange(0, ta.value.length);
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast(ok ? '✓ 已复制' : '复制失败，请手动复制');
+    } catch (e) {
+        showToast('复制失败，请手动复制');
+    }
 }
 
 function showImage(src) {
