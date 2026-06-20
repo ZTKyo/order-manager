@@ -316,9 +316,25 @@ html, body {
 .order-top {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 10px;
     margin-bottom: 8px;
+}
+
+.order-left-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+.order-right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+    flex-shrink: 0;
 }
 
 .order-customer {
@@ -328,12 +344,27 @@ html, body {
     letter-spacing: -0.015em;
 }
 
+.order-shop {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: rgba(139, 92, 246, 0.1);
+    padding: 3px 8px;
+    border-radius: 10px;
+    display: inline-block;
+    margin-top: 2px;
+    align-self: flex-start;
+}
+
 .order-price {
     font-size: 17px;
     font-weight: 700;
     color: var(--text);
     letter-spacing: -0.02em;
     white-space: nowrap;
+}
+
+.order-right-col .status-badge {
+    margin-left: 0;
 }
 
 .order-meta {

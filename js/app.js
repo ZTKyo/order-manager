@@ -708,13 +708,17 @@ function renderOrderCard(order) {
             <div class="order-thumb">${coverImg}</div>
             <div class="order-body">
                 <div class="order-top">
-                    <div class="order-customer">${escapeHtml(order.customer)}</div>
-                    <div class="order-price">${formatMoney(order.price)}</div>
+                    <div class="order-left-col">
+                        <div class="order-customer">${escapeHtml(order.customer)}</div>
+                        ${order.shop ? `<div class="order-shop">🏪 ${escapeHtml(order.shop)}</div>` : ''}
+                    </div>
+                    <div class="order-right-col">
+                        <div class="order-price">${formatMoney(order.price)}</div>
+                        ${statusBadge}
+                    </div>
                 </div>
-                ${order.shop ? `<div class="shop-badge">🏪 ${escapeHtml(order.shop)}</div>` : ''}
                 <div class="order-meta">
-                    ${statusBadge}
-                    ${order.count ? ` · ${escapeHtml(order.count)}` : ''}
+                    ${order.count ? `📦 ${escapeHtml(order.count)}` : ''}
                     ${order.modifyCount > 0 ? ` · 第${order.modifyCount}次修改` : ''}
                 </div>
                 <div class="order-meta">📅 ${formatDate(order.createdAt)}</div>
