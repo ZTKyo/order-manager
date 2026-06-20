@@ -614,7 +614,7 @@ function renderDashboard() {
     const totalPrice = orders.reduce((s, o) => s + (Number(o.price) || 0), 0);
 
     const recent = [...orders]
-        .sort((a, b) => tsToNumber(b.updatedAt) - tsToNumber(a.updatedAt));
+        .sort((a, b) => tsToNumber(b.createdAt) - tsToNumber(a.createdAt));
 
     const overdueList = orders
         .filter(o => getOverdueLevel(o) >= 1)
@@ -780,12 +780,12 @@ function filterOrders() {
     }
     // 排序：已完成筛选按 doneAt 倒序；其他按超期+更新时间
     if (state.currentFilter === 'done') {
-        list.sort((a, b) => tsToNumber(b.doneAt || b.updatedAt) - tsToNumber(a.doneAt || a.updatedAt));
+        list.sort((a, b) => tsToNumber(b.createdAt) - tsToNumber(a.createdAt));
     } else {
         list.sort((a, b) => {
             const la = getOverdueLevel(a), lb = getOverdueLevel(b);
             if (la !== lb) return lb - la;
-            return tsToNumber(b.updatedAt) - tsToNumber(a.updatedAt);
+            return tsToNumber(b.createdAt) - tsToNumber(a.createdAt);
         });
     }
     return list;
