@@ -1188,38 +1188,79 @@ function renderStats() {
         monthStats.push({ label: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`, count: list.length, done, paid });
     }
 
+    // 柱状图归一化（关键：使用固定高度 180px，数据=0 时也显示 4px 小柱子占位）
+    const maxCount = Math.max(1, ...monthStats.map(m => m.count));
+    const maxPaid = Math.max(1, ...monthStats.map(m => m.paid));
+    const chartMaxHeight = 180;
+
     const totalOrders = orders.length;
     const totalRevenue = orders.reduce((s, o) => s + (Number(o.paidAmount) || 0), 0);
     const totalPrice = orders.reduce((s, o) => s + (Number(o.price) || 0), 0);
     const totalUnpaid = orders.filter(isUnpaid).reduce((s, o) => s + getUnpaidAmount(o), 0);
 
+    // 构建 6 个月份 × 双柱子 的 HTML
+    const barsHtml = monthStats.map(ms => {
+        // 接单柱（蓝色）：0 -> 4px，其他按比例
+        const countH = ms.count === 0 ? 4 : Math.max(8, Math.round(ms.count / maxCount * chartMaxHeight));
+        // 收款柱（绿色）
+        const paidH = ms.paid === 0 ? 4 : Math.max(8, Math.round(ms.paid / maxPaid * chartMaxHeight));
+        const monthNum = parseInt(ms.label.split('-')[1], 10);
+        const countLabel = ms.count > 0 ? String(ms.count) : '';
+        const paidLabel = ms.paid > 0 ? formatMoney(ms.paid).replace('¥', '') : '';
+        return `
+            <div class="bar-col">
+                <div class="bar-bars">
+                    <div class="bar-item bar-blue" style="height:${countH}px;">
+                        <span class="bar-tooltip">${countLabel}</span>
+                    </div>
+                    <div class="bar-item bar-green" style="height:${paidH}px;">
+                        <span class="bar-tooltip">${paidLabel}</span>
+                    </div>
+                </div>
+                <div class="bar-label">${monthNum}月</div>
+            </div>
+        `;
+    }).join('');
+
     return `
         <div class="page-title">📈 数据统计</div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">本月接单</div><div class="stat-value">${thisMonth.length}</div></div>
+            <div class="stat-card"><div class="stat-label">本月完成</div><div class="stat-value">${monthDone}</div></div>
+            <div class="stat-card"><div class="stat-label">已收款</div><div class="stat-value" style="color:var(--success);">${formatMoney(monthPaid)}</div></div>
+            <div class="stat-card"><div class="stat-label">待收款</div><div class="stat-value" style="color:var(--warning);">${formatMoney(monthUnpaid)}</div></div>
+        </div>
+
         <div class="section">
-            <div class="section-title">本月 · ${curY}年${curM+1}月</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">
-                <div class="stat-card"><div class="stat-label">接单</div><div class="stat-value">${thisMonth.length}</div></div>
-                <div class="stat-card"><div class="stat-label">已完成</div><div class="stat-value">${monthDone}</div></div>
-                <div class="stat-card"><div class="stat-label">已收款</div><div class="stat-value" style="color:#10b981;">${formatMoney(monthPaid)}</div></div>
-                <div class="stat-card"><div class="stat-label">待收款</div><div class="stat-value" style="color:#ef4444;">${formatMoney(monthUnpaid)}</div></div>
+            <div class="section-title-row">
+                <div class="section-title">近 6 个月</div>
+                <div class="bar-legend">
+                    <div class="bar-legend-item"><span class="bar-legend-dot"></span>接单数</div>
+                    <div class="bar-legend-item"><span class="bar-legend-dot dot-green"></span>收款额</div>
+                </div>
+            </div>
+
+            <div class="bar-chart">
+                <div class="bar-chart-grid">
+                    ${barsHtml}
+                </div>
+            </div>
+
+            <div style="margin-top:8px;font-size:12px;color:var(--text-tertiary);text-align:center;">
+                柱高按当月占 6 个月最高值的比例显示 · 悬停在柱子上可查看具体数值
             </div>
         </div>
+
         <div class="section">
-            <div class="section-title">近 6 个月</div>
-            ${monthStats.map(ms => `
-                <div style="padding:10px 0;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:13px;">
-                    <div style="font-weight:600;">${ms.label}</div>
-                    <div style="color:#6b7280;">接单 ${ms.count} · 完成 ${ms.done} · 收款 <span style="color:#10b981;font-weight:600;">${formatMoney(ms.paid)}</span></div>
-                </div>
-            `).join('')}
-        </div>
-        <div class="section">
-            <div class="section-title">累计统计</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">
-                <div class="stat-card"><div class="stat-label">订单总数</div><div class="stat-value">${totalOrders}</div></div>
-                <div class="stat-card"><div class="stat-label">总报价</div><div class="stat-value" style="font-size:18px;">${formatMoney(totalPrice)}</div></div>
-                <div class="stat-card"><div class="stat-label">总收入</div><div class="stat-value" style="font-size:18px;color:#10b981;">${formatMoney(totalRevenue)}</div></div>
-                <div class="stat-card"><div class="stat-label">总待收</div><div class="stat-value" style="font-size:18px;color:#ef4444;">${formatMoney(totalUnpaid)}</div></div>
+            <div class="section-title-row">
+                <div class="section-title">累计统计</div>
+            </div>
+            <div class="stats-grid stats-grid-compact">
+                <div class="stat-card stat-card-small"><div class="stat-label">订单总数</div><div class="stat-value">${totalOrders}</div></div>
+                <div class="stat-card stat-card-small"><div class="stat-label">总报价</div><div class="stat-value" style="font-size:22px;">${formatMoney(totalPrice)}</div></div>
+                <div class="stat-card stat-card-small"><div class="stat-label">总收入</div><div class="stat-value" style="font-size:22px;color:var(--success);">${formatMoney(totalRevenue)}</div></div>
+                <div class="stat-card stat-card-small"><div class="stat-label">总待收</div><div class="stat-value" style="font-size:22px;color:var(--warning);">${formatMoney(totalUnpaid)}</div></div>
             </div>
         </div>
     `;
