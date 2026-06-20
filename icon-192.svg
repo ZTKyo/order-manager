@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7BB6FF"/>
+      <stop offset="1" stop-color="#0A66FF"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F0F4FF"/>
+    </linearGradient>
+    <linearGradient id="clip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4A9EFF"/>
+      <stop offset="1" stop-color="#0047B3"/>
+    </linearGradient>
+    <filter id="soft">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="0" dy="2" result="off"/>
+      <feComposite in2="off" operator="arithmetic" k2="-1" k3="1"/>
+      <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0   0 0 0 0.15 0"/>
+      <feBlend in="SourceGraphic"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="192" height="192" rx="42" fill="url(#bg)"/>
+
+  <!-- Shadow under paper -->
+  <g transform="translate(44,56)">
+    <!-- Clipboard clip -->
+    <rect x="34" y="-4" width="42" height="16" rx="4" fill="url(#clip)" opacity="0.9"/>
+
+    <!-- Paper card -->
+    <rect x="8" y="8" width="96" height="118" rx="10" fill="url(#paper)" stroke="#C7D7F0" stroke-width="1.5"/>
+
+    <!-- Clip shadow line -->
+    <line x1="20" y1="22" x2="92" y2="22" stroke="#D8E1F0" stroke-width="2" stroke-linecap="round"/>
+
+    <!-- ZTK text -->
+    <text x="56" y="50" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', sans-serif" font-size="22" font-weight="700" fill="#1A3A6B" text-anchor="middle" letter-spacing="1.5">ZTK</text>
+
+    <!-- Decorative line separator -->
+    <line x1="24" y1="62" x2="88" y2="62" stroke="#B5C6E0" stroke-width="1.5" stroke-linecap="round"/>
+
+    <!-- Order list items with checkmarks -->
+    <g transform="translate(22,72)">
+      <!-- Row 1 -->
+      <circle cx="4" cy="6" r="5" fill="#34C759"/>
+      <path d="M1.5 6 L3.5 8 L6.5 4" stroke="#FFFFFF" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="14" y1="7" x2="64" y2="7" stroke="#B5C6E0" stroke-width="2" stroke-linecap="round"/>
+
+      <!-- Row 2 -->
+      <circle cx="4" cy="22" r="5" fill="#34C759"/>
+      <path d="M1.5 22 L3.5 24 L6.5 20" stroke="#FFFFFF" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="14" y1="23" x2="64" y2="23" stroke="#B5C6E0" stroke-width="2" stroke-linecap="round"/>
+
+      <!-- Row 3 -->
+      <circle cx="4" cy="38" r="5" fill="#FF9500"/>
+      <line x1="14" y1="39" x2="64" y2="39" stroke="#B5C6E0" stroke-width="2" stroke-linecap="round"/>
+    </g>
+
+    <!-- Bottom subtle bottom row -->
+    <text x="56" y="118" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" fill="#6B8AB8" text-anchor="middle" font-weight="600" letter-spacing="0.5">订单管理</text>
+  </g>
+</svg>

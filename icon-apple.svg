@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7BB6FF"/>
+      <stop offset="1" stop-color="#0A66FF"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F0F4FF"/>
+    </linearGradient>
+    <linearGradient id="clip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4A9EFF"/>
+      <stop offset="1" stop-color="#0047B3"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="180" height="180" rx="40" fill="url(#bg)"/>
+
+  <g transform="translate(41,52)">
+    <rect x="32" y="-4" width="40" height="15" rx="4" fill="url(#clip)" opacity="0.9"/>
+    <rect x="7" y="7" width="90" height="111" rx="9" fill="url(#paper)" stroke="#C7D7F0" stroke-width="1.4"/>
+    <line x1="19" y1="21" x2="85" y2="21" stroke="#D8E1F0" stroke-width="1.8" stroke-linecap="round"/>
+    <text x="52" y="47" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="21" font-weight="700" fill="#1A3A6B" text-anchor="middle" letter-spacing="1.5">ZTK</text>
+    <line x1="22" y1="58" x2="82" y2="58" stroke="#B5C6E0" stroke-width="1.4" stroke-linecap="round"/>
+    <g transform="translate(21,68)">
+      <circle cx="4" cy="6" r="4.7" fill="#34C759"/>
+      <path d="M1.5 6 L3.5 8 L6.5 4" stroke="#FFFFFF" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="13" y1="7" x2="60" y2="7" stroke="#B5C6E0" stroke-width="1.8" stroke-linecap="round"/>
+
+      <circle cx="4" cy="20" r="4.7" fill="#34C759"/>
+      <path d="M1.5 20 L3.5 22 L6.5 18" stroke="#FFFFFF" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="13" y1="21" x2="60" y2="21" stroke="#B5C6E0" stroke-width="1.8" stroke-linecap="round"/>
+
+      <circle cx="4" cy="35" r="4.7" fill="#FF9500"/>
+      <line x1="13" y1="36" x2="60" y2="36" stroke="#B5C6E0" stroke-width="1.8" stroke-linecap="round"/>
+    </g>
+    <text x="52" y="111" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="9.5" fill="#6B8AB8" text-anchor="middle" font-weight="600" letter-spacing="0.5">订单管理</text>
+  </g>
+</svg>
