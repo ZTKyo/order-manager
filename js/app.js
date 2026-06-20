@@ -197,6 +197,11 @@ function signInAnon() {
     updateDataInfo();
 }
 
+function hideBootLoader() {
+    const el = document.getElementById('boot-loader');
+    if (el) { el.style.display = 'none'; }
+}
+
 function switchToAuthScreen() {
     storageMode = 'none';
     currentUserId = null;
@@ -206,6 +211,7 @@ function switchToAuthScreen() {
     if (auth) auth.style.display = 'flex';
     if (app) app.style.display = 'none';
     setAuthMsg('');
+    hideBootLoader();
 }
 
 function switchToAppScreen() {
@@ -219,34 +225,55 @@ function switchToAppScreen() {
     } else if (info) {
         info.textContent = '';
     }
+    hideBootLoader();
 }
 
 // ========== Auth 状态监听 ==========
+// 用一个一次性回调，避免刷新时短暂显示登录表单
+let authHandledOnce = false;
 if (fbAuth) {
-    fbAuth.onAuthStateChanged(user => {
-        if (authInitDone && !user) {
-            // 主动退出，回到登录页
-            switchToAuthScreen();
+    const unsub = fbAuth.onAuthStateChanged(user => {
+        if (authHandledOnce) {
+            // 后续登录态变化（例如主动退出/切换账号）走旧逻辑
+            if (!user) {
+                switchToAuthScreen();
+            } else {
+                currentUserId = user.uid;
+                storageMode = 'cloud';
+                switchToAppScreen();
+                setupCloudRealtime();
+            }
             return;
         }
+        authHandledOnce = true;
+        authInitDone = true;
+
         if (user) {
-            // 首次登录后进入应用
-            authInitDone = true;
+            // 已登录：直接进入应用（不显示登录页，避免"闪一下"）
             currentUserId = user.uid;
             storageMode = 'cloud';
             switchToAppScreen();
             setupCloudRealtime();
             navigate('dashboard');
-        } else if (!authInitDone) {
-            // 启动后未登录
-            authInitDone = true;
+        } else {
+            // 未登录：显示登录页
             switchToAuthScreen();
         }
     });
+    // 兜底：若 3 秒内 Firebase 仍未回调（网络/初始化异常），也退出加载态并显示登录页
+    setTimeout(() => {
+        if (!authHandledOnce) {
+            authHandledOnce = true;
+            authInitDone = true;
+            switchToAuthScreen();
+            setAuthMsg('云端连接较慢，已切换为本机可用状态');
+        }
+    }, 3000);
 } else {
     // Firebase SDK 不可用时，直接进入本机模式
     authInitDone = true;
     signInAnon();
+    hideBootLoader();
 }
 
 // ========== 数据读写层 ==========
