@@ -26,14 +26,22 @@ let currentUserId = null;     // uid (Firebase) 或 'local'
 let snapshotUnsubscribe = null;
 let firestoreReady = false;   // 防 onAuthStateChanged 重复触发
 let authInitDone = false;     // 标识首次 auth 初始化完成，避免闪烁
+let cloudInitError = null;    // 云端初始化失败时的错误信息
 
-if (typeof firebase !== 'undefined') {
-    firebaseApp = firebase.initializeApp(FB_CONFIG);
-    fbAuth = firebaseApp.auth();
-    fbFirestore = firebaseApp.firestore();
-    // 使用服务器时间，避免客户端时间不一致
-} else {
-    console.warn('Firebase SDK 未加载（可能是离线环境），将使用本地存储');
+// Firebase 初始化（带异常保护）——无论能否连接，页面都要能打开
+try {
+    if (typeof firebase !== 'undefined') {
+        firebaseApp = firebase.initializeApp(FB_CONFIG);
+        fbAuth = firebaseApp.auth();
+        fbFirestore = firebaseApp.firestore();
+    } else {
+        cloudInitError = 'Firebase SDK 未加载（网络/浏览器策略）';
+    }
+} catch (e) {
+    cloudInitError = (e && e.message) ? e.message : String(e);
+    console.warn('Firebase 初始化失败，降级为本机模式：', cloudInitError);
+    fbAuth = null;
+    fbFirestore = null;
 }
 
 // ========== 全局状态 ==========
@@ -174,6 +182,8 @@ function signUp() {
 }
 
 function signOut() {
+    // 退出时同时清理本机模式的持久化标记（下次启动会正常询问登录/本机）
+    try { localStorage.removeItem('order-mgr-explicit-local'); } catch(e){}
     if (!fbAuth) {
         // 匿名模式下也能退出：切回登录页
         switchToAuthScreen();
@@ -189,6 +199,8 @@ function signInAnon() {
     // 不登录，继续使用本地 LocalStorage（保持旧行为）
     storageMode = 'local';
     currentUserId = 'local';
+    // 持久化"用户明确选择过本机模式"，下次刷新不再弹出登录页
+    try { localStorage.setItem('order-mgr-explicit-local', '1'); } catch(e){}
     switchToAppScreen();
     loadFromLocalStorage();
     // 首次加载空数据时，展示仪表盘
@@ -229,48 +241,81 @@ function switchToAppScreen() {
 }
 
 // ========== Auth 状态监听 ==========
-// 用一个一次性回调，避免刷新时短暂显示登录表单
+// 核心保障：无论 Firebase 是否可用，都必须在几秒内进入页面（绝不"一直加载中"）
+// 优先尊重用户"本机模式"的明确选择
 let authHandledOnce = false;
-if (fbAuth) {
-    const unsub = fbAuth.onAuthStateChanged(user => {
-        if (authHandledOnce) {
-            // 后续登录态变化（例如主动退出/切换账号）走旧逻辑
-            if (!user) {
-                switchToAuthScreen();
-            } else {
-                currentUserId = user.uid;
-                storageMode = 'cloud';
-                switchToAppScreen();
-                setupCloudRealtime();
-            }
-            return;
-        }
-        authHandledOnce = true;
-        authInitDone = true;
+let bootTimeoutMs = 2500;   // Firebase 超过这个时间仍无响应 → 先进入本机模式
+const _fallbackToLocal = (reason) => {
+    if (authHandledOnce) return;
+    authHandledOnce = true;
+    authInitDone = true;
+    storageMode = 'local';
+    currentUserId = 'local';
+    try { localStorage.setItem('order-mgr-explicit-local', '1'); } catch(e){}
+    switchToAppScreen();
+    loadFromLocalStorage();
+    navigate('dashboard');
+    if (reason) {
+        showToast('云端暂不可用：' + reason + '（已切换为本机模式）');
+    } else {
+        showToast('本机模式（不同步到云端）');
+    }
+};
 
-        if (user) {
-            // 已登录：直接进入应用（不显示登录页，避免"闪一下"）
-            currentUserId = user.uid;
-            storageMode = 'cloud';
-            switchToAppScreen();
-            setupCloudRealtime();
-            navigate('dashboard');
-        } else {
-            // 未登录：显示登录页
-            switchToAuthScreen();
-        }
-    });
-    // 兜底：若 3 秒内 Firebase 仍未回调（网络/初始化异常），也退出加载态并显示登录页
-    setTimeout(() => {
-        if (!authHandledOnce) {
-            authHandledOnce = true;
-            authInitDone = true;
-            switchToAuthScreen();
-            setAuthMsg('云端连接较慢，已切换为本机可用状态');
-        }
-    }, 3000);
-} else {
-    // Firebase SDK 不可用时，直接进入本机模式
+// 快速通道 1：用户之前明确选择过"先不登录" → 直接进本机模式（不用等 Firebase）
+try {
+    if (localStorage.getItem('order-mgr-explicit-local') === '1') {
+        _fallbackToLocal(null);
+    }
+} catch(e){}
+
+if (!authHandledOnce && fbAuth) {
+    try {
+        // 启动超时：Firebase 可用，先设置超时
+        const fallbackTimer = setTimeout(() => _fallbackToLocal('连接超时'), bootTimeoutMs);
+
+        const unsub = fbAuth.onAuthStateChanged(
+            user => {
+                if (authHandledOnce) {
+                    // 后续登录态变化（退出/切换账号）
+                    if (!user) {
+                        switchToAuthScreen();
+                    } else {
+                            currentUserId = user.uid;
+                            storageMode = 'cloud';
+                            switchToAppScreen();
+                            setupCloudRealtime();
+                        }
+                    return;
+                }
+                authHandledOnce = true;
+                authInitDone = true;
+                clearTimeout(fallbackTimer);
+
+                if (user) {
+                    // 已登录：直接进入应用（不显示登录页"闪一下"）
+                    currentUserId = user.uid;
+                    storageMode = 'cloud';
+                    switchToAppScreen();
+                    setupCloudRealtime();
+                    navigate('dashboard');
+                } else {
+                    // 未登录：显示登录页
+                    switchToAuthScreen();
+                }
+            },
+            err => {
+                // onAuthStateChanged 监听异常 → 也必须保证页面可打开
+                console.warn('Auth 监听异常，降级为本机模式', err);
+                _fallbackToLocal('认证服务未就绪');
+            }
+        );
+    } catch (e) {
+        console.warn('绑定 onAuthStateChanged 失败', e);
+        _fallbackToLocal('云端初始化失败');
+    }
+} else if (!authHandledOnce) {
+    // Firebase SDK 完全不可用 → 立即进入本机模式
     authInitDone = true;
     signInAnon();
     hideBootLoader();
