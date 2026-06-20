@@ -1,10 +1,15 @@
-const CACHE_NAME = 'order-manager-v1';
+const CACHE_NAME = 'order-manager-v2';
 const urlsToCache = [
   './',
   './index.html',
   './css/style.css',
   './js/app.js',
-  './manifest.json'
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-apple.png',
+  './icon-192.svg',
+  './icon-512.svg'
 ];
 
 self.addEventListener('install', event => {
