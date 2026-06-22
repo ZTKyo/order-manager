@@ -883,6 +883,96 @@ html, body {
     background: #ffffff;
 }
 
+/* 图片容器包装 */
+.image-item-wrapper {
+    position: relative;
+    background: #ffffff;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.image-item-wrapper img {
+    width: 100%;
+    height: auto;
+    max-height: 220px;
+    object-fit: contain;
+    display: block;
+    cursor: zoom-in;
+}
+
+/* 删除按钮 */
+.img-delete-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease, background 0.2s ease, transform 0.2s ease;
+    z-index: 10;
+}
+
+.image-item-wrapper:hover .img-delete-btn {
+    opacity: 1;
+}
+
+.img-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.9);
+    transform: scale(1.1);
+}
+
+/* 拖拽手柄 */
+.img-drag-handle {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    width: 32px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: grab;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.image-item-wrapper:hover .img-drag-handle {
+    opacity: 1;
+}
+
+.img-drag-handle:hover {
+    background: rgba(0, 122, 255, 0.8);
+}
+
+/* 拖拽状态 */
+.image-item-wrapper[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.image-item-wrapper.drag-over {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 3px var(--primary), 0 8px 24px rgba(0, 122, 255, 0.25);
+}
+
+.image-item-wrapper.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+
 .detail-info {
     flex: 1;
     min-width: 280px;
