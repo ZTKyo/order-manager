@@ -1005,10 +1005,21 @@ function renderDetail(id) {
     let imagesHtml = '';
     if (order.images && order.images.length > 0) {
         if (order.images.length === 1) {
-            imagesHtml = `<img src="${order.images[0]}" onclick="showImage('${escapeHtml(order.images[0])}')">`;
+            imagesHtml = `<div class="image-item-wrapper" data-order-id="${key}" data-img-idx="0">
+                <img src="${order.images[0]}" onclick="showImage('${escapeHtml(order.images[0])}')">
+                <div class="img-delete-btn" onclick="deleteImage('${key}',0,event)">🗑️</div>
+            </div>`;
         } else {
-            imagesHtml = `<div class="image-grid">${order.images.map(src =>
-                `<img src="${src}" onclick="showImage('${escapeHtml(src)}')">`
+            imagesHtml = `<div class="image-grid" data-order-id="${key}">${order.images.map((src, i) =>
+                `<div class="image-item-wrapper" draggable="true" data-img-idx="${i}" 
+                    ondragstart="handleImgDragStart(event,${i})" 
+                    ondragover="handleImgDragOver(event)" 
+                    ondrop="handleImgDrop(event,'${key}',${i})" 
+                    ondragend="handleImgDragEnd(event)">
+                    <img src="${src}" onclick="showImage('${escapeHtml(src)}')">
+                    <div class="img-delete-btn" onclick="deleteImage('${key}',${i},event)">🗑️</div>
+                    <div class="img-drag-handle">⠿</div>
+                </div>`
             ).join('')}</div>`;
         }
     } else {
@@ -1298,6 +1309,61 @@ function saveAddImages(id) {
     closeModal();
     showToast('✓ 已添加');
     if (storageMode === 'local') renderCurrentPage();
+}
+
+// 删除图片
+function deleteImage(orderId, imgIdx, event) {
+    event.stopPropagation();
+    event.preventDefault();
+    const o = state.orders.find(x => x.id === orderId) || state.orders.find(x => x._docId === orderId);
+    if (!o || !o.images || o.images.length <= imgIdx) return;
+    o.images.splice(imgIdx, 1);
+    o.updatedAt = Date.now();
+    persistOrder(o);
+    showToast('✓ 已删除图片');
+    if (storageMode === 'local') renderCurrentPage();
+}
+
+// 图片拖拽交换
+let _dragSrcIdx = null;
+
+function handleImgDragStart(event, idx) {
+    _dragSrcIdx = idx;
+    event.target.style.opacity = '0.5';
+    event.dataTransfer.effectAllowed = 'move';
+}
+
+function handleImgDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    const wrapper = event.target.closest('.image-item-wrapper');
+    if (wrapper) wrapper.classList.add('drag-over');
+}
+
+function handleImgDrop(event, orderId, targetIdx) {
+    event.preventDefault();
+    event.stopPropagation();
+    const wrapper = event.target.closest('.image-item-wrapper');
+    if (wrapper) wrapper.classList.remove('drag-over');
+    if (_dragSrcIdx === null || _dragSrcIdx === targetIdx) return;
+    
+    const o = state.orders.find(x => x.id === orderId) || state.orders.find(x => x._docId === orderId);
+    if (!o || !o.images) return;
+    
+    // 交换位置
+    const srcImg = o.images[_dragSrcIdx];
+    o.images[_dragSrcIdx] = o.images[targetIdx];
+    o.images[targetIdx] = srcImg;
+    o.updatedAt = Date.now();
+    persistOrder(o);
+    showToast('✓ 已交换图片位置');
+    if (storageMode === 'local') renderCurrentPage();
+}
+
+function handleImgDragEnd(event) {
+    _dragSrcIdx = null;
+    event.target.style.opacity = '1';
+    document.querySelectorAll('.image-item-wrapper.drag-over').forEach(el => el.classList.remove('drag-over'));
 }
 
 // ========== 统计 ==========
@@ -1675,6 +1741,11 @@ window.showAddImageModal = showAddImageModal;
 window.handleModalImageUpload = handleModalImageUpload;
 window.removeModalImage = removeModalImage;
 window.saveAddImages = saveAddImages;
+window.deleteImage = deleteImage;
+window.handleImgDragStart = handleImgDragStart;
+window.handleImgDragOver = handleImgDragOver;
+window.handleImgDrop = handleImgDrop;
+window.handleImgDragEnd = handleImgDragEnd;
 window.deleteOrder = deleteOrder;
 window.selectShop = selectShop;
 window.showAddShopModal = showAddShopModal;
