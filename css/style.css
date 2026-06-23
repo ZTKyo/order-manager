@@ -264,8 +264,129 @@ html, body {
 /* ===== Order Card ===== */
 .orders-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+}
+
+/* 视图切换按钮 */
+.view-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 3px;
+    margin-left: auto;
+}
+.view-toggle-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+.view-toggle-btn.active {
+    background: var(--card);
+    color: var(--primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    font-weight: 600;
+}
+
+/* 列表视图 */
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.order-list-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    border: 1px solid var(--separator);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    min-height: 72px;
+}
+.order-list-row:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+.order-list-row .list-thumb {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.order-list-row .list-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.order-list-row .list-thumb .thumb-placeholder {
+    font-size: 28px;
+    color: var(--text-quaternary);
+}
+.order-list-row .list-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.order-list-row .list-row1 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.order-list-row .list-row2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.order-list-row .list-customer {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+}
+.order-list-row .list-shop {
+    font-size: 11px;
+    color: var(--text-secondary);
+    background: rgba(139, 92, 246, 0.1);
+    padding: 2px 7px;
+    border-radius: 8px;
+}
+.order-list-row .list-price {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+}
+.order-list-row .list-status {
+    font-size: 11px;
+}
+.order-list-row .list-date {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+.order-list-row .list-right {
+    flex-shrink: 0;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: flex-end;
 }
 
 .order-card {
@@ -288,18 +409,18 @@ html, body {
 
 .order-thumb {
     width: 100%;
-    min-height: 220px;
+    min-height: 140px;
     background: var(--bg-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 14px;
+    padding: 10px;
 }
 
 .order-thumb img {
     width: 100%;
     height: auto;
-    max-height: 260px;
+    max-height: 180px;
     object-fit: contain;
     border-radius: var(--radius-sm);
     display: block;
@@ -307,11 +428,11 @@ html, body {
 
 .order-thumb .thumb-placeholder {
     color: var(--text-quaternary);
-    font-size: 48px;
-    padding: 40px 0;
+    font-size: 36px;
+    padding: 24px 0;
 }
 
-.order-body { padding: 16px 18px 18px; }
+.order-body { padding: 12px 14px 14px; }
 
 .order-top {
     display: flex;
@@ -338,25 +459,25 @@ html, body {
 }
 
 .order-customer {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--text);
     letter-spacing: -0.015em;
 }
 
 .order-shop {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-secondary);
     background: rgba(139, 92, 246, 0.1);
-    padding: 3px 8px;
-    border-radius: 10px;
+    padding: 2px 7px;
+    border-radius: 8px;
     display: inline-block;
     margin-top: 2px;
     align-self: flex-start;
 }
 
 .order-price {
-    font-size: 17px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--text);
     letter-spacing: -0.02em;
@@ -1487,7 +1608,8 @@ html, body {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .stat-card .stat-value { font-size: 22px; }
     .orders-grid { grid-template-columns: 1fr; }
-    .order-thumb { min-height: 180px; }
+    .orders-list { gap: 6px; }
+    .order-thumb { min-height: 120px; }
     .section { padding: 16px; border-radius: var(--radius); }
     .form-card { padding: 16px; }
     .amount-big { font-size: 22px; }

@@ -51,6 +51,7 @@ let state = {
     currentPage: 'dashboard',
     currentFilter: 'all',
     currentSearch: '',
+    viewMode: 'grid',  // grid | list
     syncStatus: 'idle',  // idle | syncing | synced | error
 };
 
@@ -729,10 +730,7 @@ function renderOrderCard(order) {
                         ${statusBadge}
                     </div>
                 </div>
-                <div class="order-meta">
-                    ${order.count ? `📦 ${escapeHtml(order.count)}` : ''}
-                    ${order.modifyCount > 0 ? ` · 第${order.modifyCount}次修改` : ''}
-                </div>
+                ${order.modifyCount > 0 ? `<div class="order-meta">第${order.modifyCount}次修改</div>` : ''}
                 <div class="order-meta">📅 ${formatDate(order.createdAt)}</div>
                 <div class="order-unpaid ${unpaid>0?'':'owes'}">
                     ${unpaidLine}
@@ -746,8 +744,15 @@ function renderOrderCard(order) {
 
 // ========== 订单列表 ==========
 function renderOrders() {
+    const viewMode = state.viewMode || 'grid';
     return `
-        <div class="page-title">📋 订单列表 (${state.orders.length})</div>
+        <div class="page-title" style="display:flex;align-items:center;gap:12px;">
+            <span>📋 订单列表 (${state.orders.length})</span>
+            <div class="view-toggle">
+                <button class="view-toggle-btn ${viewMode==='grid'?'active':''}" onclick="setViewMode('grid')">⊞ 宫格</button>
+                <button class="view-toggle-btn ${viewMode==='list'?'active':''}" onclick="setViewMode('list')">☰ 列表</button>
+            </div>
+        </div>
 
         <input type="text" class="search-box" placeholder="🔍 搜索客户昵称、备注..."
             value="${escapeHtml(state.currentSearch)}"
@@ -797,7 +802,59 @@ function renderOrderListBody(list) {
     if (list.length === 0) {
         return '<div class="empty"><div class="empty-icon">📭</div><div>没有符合条件的订单</div></div>';
     }
+    const viewMode = state.viewMode || 'grid';
+    if (viewMode === 'list') {
+        return `<div class="orders-list">${list.map(o => renderOrderListRow(o)).join('')}</div>`;
+    }
     return `<div class="orders-grid">${list.map(o => renderOrderCard(o)).join('')}</div>`;
+}
+
+function renderOrderListRow(order) {
+    const unpaid = getUnpaidAmount(order);
+    const overdueLevel = getOverdueLevel(order);
+    const overdueText = ['', '超期3-7天', '超期7-10天', '可能已自动收款'][overdueLevel] || '';
+
+    const coverImg = order.images && order.images.length > 0
+        ? `<img src="${order.images[0]}" alt="">`
+        : `<div class="thumb-placeholder">📐</div>`;
+
+    const statusBadge = STATUS_MAP[order.status]
+        ? `<span class="status-badge ${STATUS_MAP[order.status].class}">${STATUS_MAP[order.status].label}</span>`
+        : '';
+
+    let unpaidLine = '';
+    if (order.status === 'cancel') unpaidLine = '已取消';
+    else if (unpaid <= 0 && order.paidAmount > 0) unpaidLine = '✓ 已收款';
+    else if (unpaid > 0) unpaidLine = `待收 ${formatMoney(unpaid)}`;
+    else unpaidLine = '未收款';
+
+    const key = order._docId || order.id;
+
+    return `
+        <div class="order-list-row" onclick="navigate('detail','${key}')">
+            <div class="list-thumb">${coverImg}</div>
+            <div class="list-info">
+                <div class="list-row1">
+                    <span class="list-customer">${escapeHtml(order.customer)}</span>
+                    ${order.shop ? `<span class="list-shop">🏪 ${escapeHtml(order.shop)}</span>` : ''}
+                    ${statusBadge ? `<span class="list-status">${statusBadge}</span>` : ''}
+                </div>
+                <div class="list-row2">
+                    <span class="list-date">📅 ${formatDate(order.createdAt)}</span>
+                    ${overdueText ? `<span style="font-size:11px;color:#ef4444;">⚠ ${overdueText}</span>` : ''}
+                </div>
+            </div>
+            <div class="list-right">
+                <span class="list-price">${formatMoney(order.price)}</span>
+                <span style="font-size:11px;color:${unpaid>0?'var(--danger)':'var(--success)'};">${unpaidLine}</span>
+            </div>
+        </div>
+    `;
+}
+
+function setViewMode(mode) {
+    state.viewMode = mode;
+    renderCurrentPage();
 }
 
 function updateOrderList() {
@@ -823,10 +880,6 @@ function renderNewOrder() {
                 <div class="form-group">
                     <label class="form-label">报价金额 (元)<span style="color:#ef4444;">*</span></label>
                     <input class="form-input" id="new-price" type="number" min="0" step="0.01" placeholder="300">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">效果图数量</label>
-                    <input class="form-input" id="new-count" placeholder="1张 / 3张">
                 </div>
             </div>
             <div class="form-group">
@@ -925,13 +978,12 @@ function removePendingImage(idx) {
 function handleNewOrderSubmit() {
     const customer = document.getElementById('new-customer').value.trim();
     const price = parseFloat(document.getElementById('new-price').value);
-    const count = document.getElementById('new-count').value.trim();
     const note = document.getElementById('new-note').value.trim();
     const shop = document.getElementById('new-shop').value.trim();
     if (!customer) { showToast('请填写客户昵称'); return; }
     if (isNaN(price) || price < 0) { showToast('请填写正确金额'); return; }
 
-    const order = createOrder({ customer, price, count, note, shop, images: [...window._pendingImages] });
+    const order = createOrder({ customer, price, note, shop, images: [...window._pendingImages] });
     window._pendingImages = [];
     showToast('✓ 订单已创建');
     // 跳转到详情页（需要有 key；云端模式下 key 由 onSnapshot 生成）
@@ -1074,7 +1126,6 @@ function renderDetail(id) {
                 <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:13px;display:flex;justify-content:space-between;"><span style="color:#6b7280;">店铺</span><span>${escapeHtml(order.shop || '（未指定）')}</span></div>
                 <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:13px;display:flex;justify-content:space-between;"><span style="color:#6b7280;">报价</span><span>${formatMoney(order.price)}</span></div>
                 <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:13px;display:flex;justify-content:space-between;"><span style="color:#6b7280;">已收</span><span>${formatMoney(order.paidAmount)}</span></div>
-                ${order.count ? `<div style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:13px;display:flex;justify-content:space-between;"><span style="color:#6b7280;">数量</span><span>${escapeHtml(order.count)}</span></div>`:''}
                 ${order.modifyCount > 0 ? `<div style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:13px;display:flex;justify-content:space-between;"><span style="color:#6b7280;">修改次数</span><span>第 ${order.modifyCount} 次</span></div>`:''}
                 <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:13px;display:flex;justify-content:space-between;"><span style="color:#6b7280;">创建</span><span>${formatDateTime(order.createdAt)}</span></div>
                 <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;font-size:13px;display:flex;justify-content:space-between;"><span style="color:#6b7280;">最后更新</span><span>${formatDateTime(order.updatedAt)}</span></div>
@@ -1211,7 +1262,6 @@ function showEditModal(id) {
             <div class="form-group"><label class="form-label">报价金额</label><input class="form-input" id="edit-price" type="number" min="0" step="0.01" value="${o.price || 0}"></div>
             <div class="form-group"><label class="form-label">已收金额</label><input class="form-input" id="edit-paid" type="number" min="0" step="0.01" value="${o.paidAmount || 0}"></div>
         </div>
-        <div class="form-group"><label class="form-label">效果图数量</label><input class="form-input" id="edit-count" value="${escapeHtml(o.count || '')}" placeholder="1张"></div>
         <div class="form-group"><label class="form-label">查看链接</label><input class="form-input" id="edit-viewlink" value="${escapeHtml(o.viewLink || '')}" placeholder="https://..."></div>
         <div class="form-group"><label class="form-label">源文件链接</label><input class="form-input" id="edit-sourcelink" value="${escapeHtml(o.sourceLink || '')}" placeholder="https://..."></div>
         <div class="form-group"><label class="form-label">备注</label><textarea class="form-textarea" id="edit-note">${escapeHtml(o.note || '')}</textarea></div>
@@ -1229,7 +1279,6 @@ function saveEdit(id) {
     o.shop = document.getElementById('edit-shop').value.trim();
     o.price = parseFloat(document.getElementById('edit-price').value) || 0;
     o.paidAmount = parseFloat(document.getElementById('edit-paid').value) || 0;
-    o.count = document.getElementById('edit-count').value.trim();
     o.viewLink = document.getElementById('edit-viewlink').value.trim();
     o.sourceLink = document.getElementById('edit-sourcelink').value.trim();
     o.note = document.getElementById('edit-note').value.trim();
@@ -1724,6 +1773,7 @@ window.signOut = signOut;
 window.signInAnon = signInAnon;
 window.tryCloudLogin = tryCloudLogin;
 window.navigate = navigate;
+window.setViewMode = setViewMode;
 window.exportData = exportData;
 window.importData = importData;
 window.closeModal = closeModal;
